@@ -211,12 +211,3 @@ This pattern is aligned with event-driven architecture principles to allow for s
 10. **Compliance & Regulatory Testing**:
     - Ensuring that the system meets specific industry standards and regulations.
     - Conducting regular audits and assessments, possibly with specialized testing or certification services.
-
-11. **Environment Management**:
-    - Creating and managing multiple testing environments like dev, staging, and production.
-    - Utilizing infrastructure as code (IaC) tools like Terraform, and automating environment provisioning and teardown through GitHub Actions.
-
-12. **Collaboration & Documentation**:
-    - Encouraging collaboration between developers, testers, and stakeholders.
-    - Documenting testing strategies, plans, and results for transparency and accountability.
-    - Using GitHub and related tools for collaboration, code review, and documentation as part of the DevOps process.
