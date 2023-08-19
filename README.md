@@ -15,6 +15,10 @@
 8. [Appendices](#appendices)
    - [Appendix A: Event Driven Architecture](#appendix-a-event-driven-architecture)
    - [Appendix B: Troubleshooting Guide](#appendix-b-troubleshooting-guide)
+   - [Appendix C: Security Measures](#appendix-c-security-measures)
+   - [Appendix D: Performance Considerations](#appendix-d-performance-considerations)
+   - [Appendix E: Cost Analysis](#appendix-e-cost-analysis)
+   - [Appendix F: Testing Strategies](#appendix-f-testing-strategies)
 9. [Glossary](#glossary)
 
 ## Pattern Function
@@ -73,20 +77,146 @@ The data will be loaded into an Azure SQL database to be used by other applicati
 This pattern is aligned with event-driven architecture principles to allow for scalability and the ability to handle unpredictable loads. This is done by decoupling the individual components and allowing them to communicate through events, which means that each part can be scaled independently without affecting the others.
 
 ### Appendix B: Troubleshooting Guide
-1. **Problem A**: Solution for problem A.
-2. **Problem B**: Solution for problem B.
-... (more troubleshooting details)
+1. **Problem A:** Message Delivery Delays in Azure Service Bus:
+
+   * **Symptoms:** Subscribers experience significant delays in receiving messages from Azure Service Bus.
+   * **Possible Causes:** Network latency, service overload, misconfigured settings, or a bottleneck in the subscriber's processing.
+   * **Solution:**
+   
+      1.1 Check the Azure Service Bus metrics for signs of increased latency or overload.
+      
+      1.2 Validate the configuration settings for the message's Time-to-Live (TTL), delivery attempts, etc.
+      
+      1.3 Examine the subscribers' processing efficiency and optimize if necessary.
+      
+      1.4 Consider scaling the Azure Service Bus or subscribers if the system is consistently reaching capacity.
+      
+      1.5 Consult Azure Monitor logs for specific error messages or warnings that may point to underlying issues.
+2. **Problem B:** Unauthorized Access Errors in Azure Logic Apps:
+
+   * **Symptoms:** Workflow failures or errors relating to unauthorized access when Azure Logic Apps attempt to interact with other resources.
+   * **Possible Causes:** Incorrect permissions, expired or revoked credentials, misconfigured access policies.
+   * **Solution:**
+      
+      2.1 Validate that the Azure Logic App has the appropriate permissions to access the required resources, such as using Managed Identity or specific roles.
+      
+      2.2 Ensure that the credentials used are valid and not expired, updating them if necessary in Azure Key Vault.
+      
+      2.3 Review and correct any misconfigured access policies or firewalls that may be blocking the Azure Logic App from interacting with the resources.
+      
+      2.4 Consult the detailed error messages in Azure Monitor to pinpoint the specific issue, such as a particular permission that is missing or a specific resource that cannot be accessed.
+      
+      2.5 If all else fails, engage Azure Support with detailed logs and error messages for specialized assistance.
 
 ### Appendix C: Security Measures
+1. Authentication & Authorization:
+   * Utilize Azure Active Directory for user authentication and authorization, ensuring that only authorized personnel have access to the resources.
+   * Implement Role-Based Access Control (RBAC) to define access permissions for various roles within the applications.
+2. Data Encryption:
+   * Encrypt data at rest using Azure Storage Service Encryption.
+   * Enable Transport Layer Security (TLS) to encrypt data in transit between services and applications.
+3. Network Security:
+   * Deploy Azure Application Gateway with Web Application Firewall (WAF) to detect and prevent malicious attacks.
+   * Implement Virtual Network (VNet) peering and Network Security Groups (NSGs) to control traffic flow and isolate resources within a secure network boundary.
+4. Monitoring & Logging:
+   * Use Azure Security Center for unified security management, including continuous monitoring and advanced analytics.
+   * Implement Azure Monitor and Log Analytics for real-time monitoring and logging of security events, providing insights into potential threats.
+5. Identity Management:
+   * Implement Managed Identities to automate and secure the management of credentials used by the services.
+   * Utilize Azure Key Vault to store and manage sensitive information such as secrets, encryption keys, and certificates securely.
+6. Compliance & Regulations:
+   * Ensure compliance with industry regulations and standards, such as GDPR, HIPAA, etc., by adhering to Azure Compliance offerings.
+   * Regularly conduct security audits and assessments to identify potential vulnerabilities and ensure alignment with compliance requirements.
+7. Incident Response:
+   * Develop and maintain a well-documented incident response plan in collaboration with Azure's security best practices.
+   * Engage Azure's Rapid Response services for immediate assistance in case of critical security incidents.
 
 ### Appendix D: Performance Considerations
+1. **Scalability**: Utilize Azure Kubernetes Service (AKS) and Azure Service Bus for horizontal scaling. Consider the potential for increased load and design the system to handle spikes efficiently.
+2. **Latency**: Minimize latency by optimizing the message routing and processing within Azure Logic Apps and Service Bus. Monitor and identify bottlenecks to keep the data flow smooth.
+3. **Reliability**: Implement redundancy in critical parts of the system, such as using Azure Availability Zones. Consider the potential failure points and how the system will handle them.
+4. **Throughput**: Optimize the system for high throughput by using Azure Service Bus topics and subscriptions effectively. Monitor the message rates and adjust accordingly.
+5. **Resource Optimization**: Keep an eye on resource utilization, such as CPU, memory, and storage. Optimize the code and configuration to use resources efficiently.
+6. **Monitoring and Diagnostics**: Implement robust monitoring and diagnostic tools like Azure Monitor and Application Insights. Regularly review performance metrics and logs to identify and address issues.
 
 ### Appendix E: Cost Analysis
+1. **Azure Kubernetes Service (AKS)**:
+   - Cluster Costs: Based on the number of nodes, VM size, and reserved instances.
+   - Additional Costs: For additional features like monitoring, logging, or premium networking.
+2. **Azure Service Bus**:
+   - Costs vary depending on the tier (Basic, Standard, Premium) and features like number of topics, subscriptions, messages, etc.
+3. **Azure Logic Apps**:
+   - Costs are based on the number of runs, execution frequency, and action execution.
+4. **Azure SQL**:
+   - Costs depend on the database size, number of transactions, and chosen pricing tier (e.g., DTU vs vCore).
+5. **Azure Application Gateway**:
+   - Pricing based on the number of hours the gateway is running and the amount of data processed.
+6. **Azure Storage Account**:
+   - Costs are associated with the amount of data stored, transactions performed, and any additional features like geo-replication.
+7. **Other Considerations**:
+   - Network Costs: Including bandwidth, VPN, and other networking components.
+   - Compliance Costs: For any required compliance certifications or audits.
+   - Support and Maintenance: Consider the cost of ongoing support, maintenance, and potential future upgrades.
+8. **Cost Optimization Strategies**:
+   - Leverage Azure Cost Management tools to monitor and optimize costs.
+   - Consider reserved instances or spot pricing for applicable resources.
+   - Regularly review resource utilization and remove or downgrade unnecessary resources.
+   - Consider using Azure Hybrid Benefit or other cost-saving licensing options.
 
 ### Appendix F: Testing Strategies
+1. **Unit Testing**:
+   - Writing individual tests for smaller components of the application.
+   - Utilizing popular testing frameworks like JUnit, NUnit, or xUnit, depending on the programming language.
+   - Running tests automatically with GitHub Actions on every push or pull request to ensure code quality.
 
-## Glossary
-- **AKS**: Azure Kubernetes Service
-- **DLQ**: Dead Letter Queue
-- **FIFO**: First In First Out
-... (other terms)
+2. **Integration Testing**:
+   - Testing the integration points between different services, such as Azure Service Bus, Logic Apps, and SQL.
+   - Leveraging tools like Postman or SoapUI for API testing, combined with code-based integration tests.
+   - Using GitHub Actions to run integration tests in parallel with unit tests or as a separate workflow step.
+
+3. **Load Testing**:
+   - Simulating real-world load on the system to understand how it behaves under stress.
+   - Using tools like Apache JMeter or LoadRunner to generate traffic and analyze system performance.
+   - Potentially automating load tests through GitHub Actions in staging or pre-production environments.
+
+4. **Security Testing**:
+   - Conducting regular vulnerability scanning and penetration testing to ensure the security of the system.
+   - Utilizing tools like OWASP ZAP or specialized security testing platforms.
+   - Integrating security tests into the CI/CD pipeline with GitHub Actions for continuous monitoring.
+
+5. **User Acceptance Testing (UAT)**:
+   - Collaborating with stakeholders to validate that the system meets business requirements.
+   - Manual testing by end-users or automated end-to-end testing using tools like Selenium or Cypress.
+   - Considering GitHub Actions for automated UAT if applicable.
+
+6. **Accessibility Testing**:
+   - Ensuring that the application is accessible to all users, including those with disabilities.
+   - Using accessibility testing tools like Axe or Wave, and manual testing to comply with relevant standards like WCAG.
+   - Integrating accessibility checks into GitHub Actions as part of the continuous testing process.
+
+7. **Continuous Testing with GitHub Actions**:
+   - Implementing a continuous testing strategy using GitHub Actions to run tests at various stages of the development process.
+   - Configuring workflows to trigger on different GitHub events like push, pull requests, or scheduled runs.
+   - Leveraging GitHub's matrix strategy to test across multiple environments, configurations, or versions.
+   - Integrating test results and coverage reports with GitHub or third-party tools for visibility and traceability.
+
+8. **Monitoring & Observability in Production**:
+   - Continuous monitoring of the application in production using tools like Azure Monitor, Application Insights, or custom logging.
+   - Implementing alerting and observability strategies to detect and respond to issues proactively.
+
+9. **Test Data Management**:
+   - Managing test data to ensure consistency, quality, and compliance.
+   - Utilizing tools for test data generation, masking, or synthetic data creation to support various testing needs.
+
+10. **Compliance & Regulatory Testing**:
+    - Ensuring that the system meets specific industry standards and regulations.
+    - Conducting regular audits and assessments, possibly with specialized testing or certification services.
+
+11. **Environment Management**:
+    - Creating and managing multiple testing environments like dev, staging, and production.
+    - Utilizing infrastructure as code (IaC) tools like Terraform, and automating environment provisioning and teardown through GitHub Actions.
+
+12. **Collaboration & Documentation**:
+    - Encouraging collaboration between developers, testers, and stakeholders.
+    - Documenting testing strategies, plans, and results for transparency and accountability.
+    - Using GitHub and related tools for collaboration, code review, and documentation as part of the DevOps process.
