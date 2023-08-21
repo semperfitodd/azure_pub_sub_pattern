@@ -29,7 +29,6 @@ Make that event data available for other applications and services in a reliable
 ## Pattern Resources
 - Azure Kubernetes Service
 - Azure Application Gateway
-- Azure Kubernetes Service
 - Azure Logic Apps
 - Azure Service Bus
 - Azure Event Grid
