@@ -42,7 +42,9 @@ Make that event data available for other applications and services in a reliable
 ## Pattern Structure
 *Please refer to the diagram below for the structural overview.*
 
-![Pattern Structure](link-to-diagram.png)
+![Pattern Structure](pub_sub_pattern_components.png)
+
+![Logic Structure](pub_sub_pattern_logic_flow.png)
 
 ### Service Usage Details
 This structure hosts applications on AKS (Azure Kubernetes Service). 
