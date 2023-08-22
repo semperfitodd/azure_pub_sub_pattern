@@ -46,11 +46,11 @@ Make that event data available for other applications and services in a reliable
 
 ### Service Usage Details
 This structure hosts applications on AKS (Azure Kubernetes Service). 
-The publishing applications are protected and routed to by an Azure Application Gateway 
-Azure Logic Apps are used to manage work by reviewing inputs to determine the proper workflow
-Azure Service Bus will use Namespaces and Topics to organize data that can be retrieved from subscribers.
-Azure Event grid will be used to determine what actions are taken when the workflow has an error
-Azure Sql and Azure Storage Accounts will be used to store data.
+- The publishing applications are protected and routed to by an Azure Application Gateway.
+- Azure Logic Apps are used to manage work by reviewing inputs to determine the proper workflow.
+- Azure Service Bus will use Namespaces and Topics to organize data that can be retrieved from subscribers.
+- Azure Event grid will be used to determine what actions are taken when the workflow has an error.
+- Azure Sql and Azure Storage Accounts will be used to store data.
 
 ## Workflow
 ### Data Ingestion
@@ -68,19 +68,19 @@ In this pattern Application Y will use Topic A0 and Application Z will use Topic
 
 ### Further Processing
 #### Application Y
-##### Data Retrieval and Processing
+##### _Data Retrieval and Processing_
 In this pattern, Application Y is designed to subscribe to Azure Service Bus Topic A0 and process the published data. The data will be loaded into an Azure SQL databases, both Azure hosted and On-Prem to be used by other applications and to provide data for reporting.
 Once the data is recieved and processed, the application will POST a request trigger with a schema appropriate body to the Azure Logic App callable endpoint designated by the code. The callable endpoint will route the event data to the workflow, where it will be searched for key:value pairs in its payload to determine the next step of the workflow. Assuming the workflow has two successful paths, 0 and 1, the Logic App will route successful messages to an Azure Service Bus Namespace, Namespace B, configured with Topics B0 and B1. Unsuccessful messages, such as those with missing fields, will be routed to the Azure Event Grid.
 As the last step of a successful workflow, the logic app will trigger the Azure Service Bus Topic A0 to resolve and delete the retrieved message. This ensures the data was properly ingested in the intake process and received by the next step. 
 Assuming the successful paths from Application Y to be 0 and 1, the data from path 0, will be sent by the Logic App to Topic B0 and data from path 1 will be sent by the Logic App to Topic B1.
-Namespace B will also be configured for FIFO queuing, PeekLock subscription handling, and dead-letter queuing. This is the same as Namespace A. This means that a message in Namespace B that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue), which is a built in subqueue for all Azure Service Bus Queues and Topics with deal-lettering enabled. This pattern has dead-lettering enabled by default.
+Namespace B will also be configured for FIFO queuing, PeekLock subscription handling, and dead-letter queuing. This is the same as Namespace A. This means that a message in Namespace B that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue), which is a built in subqueue for all Azure Service Bus Queues and Topics with deal-lettering enabled. This pattern has dead-lettering enabled by default. 
 
-##### Data Storage on Azure SQL Server
+##### _Data Storage on Azure SQL Server_
 A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a seperate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy. 
 Data from Topic B0 will be sent to the Azure SQL Server via the Azure SQL Server standard connector and configured to retry delivery X times (default 4). If the Logic App does not recieve a successful response (200 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
 The last step of this logic app will be to remove the consumption lock from the message in Topic B0.  
 
-##### Data Storage on On-Prem SQL Server
+##### _Data Storage on On-Prem SQL Server_
 A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a seperate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy. 
 Data from Topic B1 will be sent to the On-Prem SQL Server via the SQL Server standard connector. This data will be sent via either ExpressRoute or VPN connection and the Logic App will be configured to retry delivery X times (default 4). If the Logic App does not recieve a successful response (200 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
 The last step of this logic app will be to remove the consumption lock from the message in Topic B1.  
