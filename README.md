@@ -54,14 +54,15 @@ Make that event data available for other applications and services in a multi-re
 ![Logic Structure](pub_sub_pattern_logic_flow.png)
 
 ## Pattern Logic Flow
-1. Azure Application Gateway ingests data.
-2. Application X processes data.
-3. Routing Logic App routes data to Service Bus Namespace A Topics or to Event Grid Topics as appropriate.
-4. Data is queued in Service Bus Topics.
-5. Application Y or Z retrieves data from Service Bus Topics.
-6. Applications Y and Z sends data to Routing Logic App.
-7. Routing Logic App sends data to Service Bus Namespace B or C as appropriate.
-8. Storage Logic App sends data to Azure SQL, On-Prem SQL, or Blob Storage as appropriate.
+1. Azure Traffic Manager monitors Application Gateway Endpoint health in each region and updates DNS as appropriate.
+2. Azure Application Gateway ingests data.
+3. Application X processes data.
+4. Routing Logic App routes data to Service Bus Namespace A Topics or to Event Grid Topics as appropriate.
+5. Data is queued in Service Bus Topics.
+6. Application Y or Z retrieves data from Service Bus Topics.
+7. Applications Y and Z sends data to Routing Logic App.
+8. Routing Logic App sends data to Service Bus Namespace B or C as appropriate.
+9. Storage Logic App sends data to Azure SQL, On-Prem SQL, or Blob Storage as appropriate.
 
 ## Service Usage Details
 This structure deploys infrastructure to two regions for redundancy.
