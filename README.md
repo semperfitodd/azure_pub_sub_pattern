@@ -55,21 +55,21 @@ Make that event data available for other applications and services in a multi-re
 ![Logic Structure](pub_sub_pattern_logic_flow.png)
 
 ## Pattern Logic Flow
-- Azure Traffic Manager routes to active Application Gateway.
-- Azure Application Gateway ingests data.
-- Application X processes data.
-- Routing Logic App routes data to Service Bus Namespace A Topics or to Event Grid Topics as appropriate.
-- Data is queued in Service Bus Topics.
-- Application Y or Z retrieves data from Service Bus Topics.
-- Applications Y and Z sends data to Routing Logic App.
-- Routing Logic App sends data to Service Bus Namespace B or C as appropriate.
-- Storage Logic App sends data to Azure SQL, On-Prem SQL, or Blob Storage as appropriate
+1. Azure Traffic Manager routes to active Application Gateway.
+2. Azure Application Gateway ingests data.
+3. Application X processes data.
+4. Routing Logic App routes data to Service Bus Namespace A Topics or to Event Grid Topics as appropriate.
+5. Data is queued in Service Bus Topics.
+6. Application Y or Z retrieves data from Service Bus Topics.
+7. Applications Y and Z sends data to Routing Logic App.
+8. Routing Logic App sends data to Service Bus Namespace B or C as appropriate.
+9. Storage Logic App sends data to Azure SQL, On-Prem SQL, or Blob Storage as appropriate.
 
 ## Service Usage Details
 This structure deploys infrastructure to two regions for redundancy.
 - Each application are protected and routed to by an Azure Application Gateway.
-- Client data will be routed to the Azure Application Gateway via Azure Traffic Manager for DNS routing redundancy. 
-This structure hosts applications on AKS (Azure Kubernetes Service). 
+- Client data will be routed to the Azure Application Gateway via Azure Traffic Manager for DNS routing redundancy.
+- This structure hosts applications on AKS (Azure Kubernetes Service). 
 - Azure Logic Apps are used to manage work by reviewing inputs to determine the proper workflow.
 - Azure Service Bus will use Namespaces and Topics to organize data that can be retrieved from subscribers.
 - Azure Event grid will be used to determine what actions are taken when the workflow has an error.
