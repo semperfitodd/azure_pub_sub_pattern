@@ -5,13 +5,19 @@
 2. [Pattern Resources](#pattern-resources)
 3. [Pattern Requirements](#pattern-requirements)
 4. [Pattern Structure](#pattern-structure)
-5. [Service Usage Details](#service-usage-details)
-6. [Workflow](#workflow)
+5. [Pattern Logic Flow](#pattern-logic-flow)
+6. [Service Usage Details](#service-usage-details)
+7. [Workflow](#workflow)
    - [Data Ingestion](#data-ingestion)
    - [Data Queueing and Publishing](#data-queueing-and-publishing)
    - [Data Subscriptions](#data-subscriptions)
    - [Further Processing](#further-processing)
-7. [Application Y](#application-y)
+      -[Application Y](#application-y)
+         - [Data Retrieval and Processing](#data-retrieval-and-processing)
+         - [Data Storage on Azure SQL Server](#data-storage-on-azure-sql-server)
+         - [Data Storage on On-Prem SQL Server](#data-storage-on-onprem-sql-server)
+      - [Application Z](#application-z)
+   - [Error Handling](#error-handling)
 8. [Appendices](#appendices)
    - [Appendix A: Event Driven Architecture](#appendix-a-event-driven-architecture)
    - [Appendix B: Troubleshooting Guide](#appendix-b-troubleshooting-guide)
@@ -24,9 +30,10 @@
 ## Pattern Function
 To process incoming event traffic. 
 Route that traffic that event data based on defined logic workflows.
-Make that event data available for other applications and services in a reliable, scalable fashion.
+Make that event data available for other applications and services in a multi-region, reliable, scalable fashion.
 
 ## Pattern Resources
+- Azure Traffic Manager
 - Azure Kubernetes Service
 - Azure Application Gateway
 - Azure Logic Apps
@@ -37,6 +44,7 @@ Make that event data available for other applications and services in a reliable
 
 ## Pattern Requirements
 - X number of applications either publishing data or subscribing to it.
+- All infrastructure is deployed to two regions.
 - All actions performed by applications must be proven to have completed or retried X number of times before an alert notification is triggered.
 
 ## Pattern Structure
@@ -46,9 +54,22 @@ Make that event data available for other applications and services in a reliable
 
 ![Logic Structure](pub_sub_pattern_logic_flow.png)
 
-### Service Usage Details
+## Pattern Logic Flow
+- Azure Traffic Manager routes to active Application Gateway.
+- Azure Application Gateway ingests data.
+- Application X processes data.
+- Routing Logic App routes data to Service Bus Namespace A Topics or to Event Grid Topics as appropriate.
+- Data is queued in Service Bus Topics.
+- Application Y or Z retrieves data from Service Bus Topics.
+- Applications Y and Z sends data to Routing Logic App.
+- Routing Logic App sends data to Service Bus Namespace B or C as appropriate.
+- Storage Logic App sends data to Azure SQL, On-Prem SQL, or Blob Storage as appropriate
+
+## Service Usage Details
+This structure deploys infrastructure to two regions for redundancy.
+- Each application are protected and routed to by an Azure Application Gateway.
+- Client data will be routed to the Azure Application Gateway via Azure Traffic Manager for DNS routing redundancy. 
 This structure hosts applications on AKS (Azure Kubernetes Service). 
-- The publishing applications are protected and routed to by an Azure Application Gateway.
 - Azure Logic Apps are used to manage work by reviewing inputs to determine the proper workflow.
 - Azure Service Bus will use Namespaces and Topics to organize data that can be retrieved from subscribers.
 - Azure Event grid will be used to determine what actions are taken when the workflow has an error.
@@ -70,19 +91,19 @@ In this pattern Application Y will use Topic A0 and Application Z will use Topic
 
 ### Further Processing
 #### Application Y
-##### _Data Retrieval and Processing_
+##### Data Retrieval and Processing
 In this pattern, Application Y is designed to subscribe to Azure Service Bus Topic A0 and process the published data. The data will be loaded into an Azure SQL databases, both Azure hosted and On-Prem to be used by other applications and to provide data for reporting.
 Once the data is recieved and processed, the application will POST a request trigger with a schema appropriate body to the Azure Logic App callable endpoint designated by the code. The callable endpoint will route the event data to the workflow, where it will be searched for key:value pairs in its payload to determine the next step of the workflow. Assuming the workflow has two successful paths, 0 and 1, the Logic App will route successful messages to an Azure Service Bus Namespace, Namespace B, configured with Topics B0 and B1. Unsuccessful messages, such as those with missing fields, will be routed to the Azure Event Grid.
 As the last step of a successful workflow, the logic app will trigger the Azure Service Bus Topic A0 to resolve and delete the retrieved message. This ensures the data was properly ingested in the intake process and received by the next step. 
 Assuming the successful paths from Application Y to be 0 and 1, the data from path 0, will be sent by the Logic App to Topic B0 and data from path 1 will be sent by the Logic App to Topic B1.
 Namespace B will also be configured for FIFO queuing, PeekLock subscription handling, and dead-letter queuing. This is the same as Namespace A. This means that a message in Namespace B that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue), which is a built in subqueue for all Azure Service Bus Queues and Topics with deal-lettering enabled. This pattern has dead-lettering enabled by default. 
 
-##### _Data Storage on Azure SQL Server_
+##### Data Storage on Azure SQL Server
 A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a seperate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy. 
 Data from Topic B0 will be sent to the Azure SQL Server via the Azure SQL Server standard connector and configured to retry delivery X times (default 4). If the Logic App does not recieve a successful response (200 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
 The last step of this logic app will be to remove the consumption lock from the message in Topic B0.  
 
-##### _Data Storage on On-Prem SQL Server_
+##### Data Storage on On-Prem SQL Server
 A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a seperate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy. 
 Data from Topic B1 will be sent to the On-Prem SQL Server via the SQL Server standard connector. This data will be sent via either ExpressRoute or VPN connection and the Logic App will be configured to retry delivery X times (default 4). If the Logic App does not recieve a successful response (200 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
 The last step of this logic app will be to remove the consumption lock from the message in Topic B1.  
