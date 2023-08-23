@@ -12,7 +12,7 @@
    - [Data Queueing and Publishing](#data-queueing-and-publishing)
    - [Data Subscriptions](#data-subscriptions)
    - [Further Processing](#further-processing)
-      -[Application Y](#application-y)
+      - [Application Y](#application-y)
          - [Data Retrieval and Processing](#data-retrieval-and-processing)
          - [Data Storage on Azure SQL Server](#data-storage-on-azure-sql-server)
          - [Data Storage on On-Prem SQL Server](#data-storage-on-onprem-sql-server)
