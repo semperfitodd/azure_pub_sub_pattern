@@ -81,11 +81,11 @@ Data traffic will be routed using traffic manager to the appropriate Azure Appli
 The callable endpoint will route the JSON load to a workflow to determine the next step. The workflow has two happy paths, 0 and 1, the Logic App will route successful messages to Azure Service Bus Namespace A, configured with Topics A0 and A1. Unsuccessful messages will be routed to the Azure Event Grid.
 
 ### Data Queueing and Publishing
-Azure Service Bus will be configured with namespaces appropriate for business operations and topics appropriate for publishing distinct data. Assuming the successful paths from Application X to be 0 and 1, then the data from path 0 will be sent by the Logic App to Topic A0 and data from path 1 will be sent by the Logic App to Topic A1.
+Azure Service Bus will be configured with namespaces appropriate for business operations and topics appropriate for publishing distinct data. The successful paths from Application X are 0 and 1. The data from path 0 will be sent by the Logic App to Topic A0 and data from path 1 will be sent by the Logic App to Topic A1.
 
-Azure Service Bus will be configured FIFO(First In First Out) message queuing in PeekLock mode. This requires the subscribing service to request the data, which will cause a consumption lock to be placed on the message, preventing other subscribers from retrieving the message. This consumption lock remains in place until the subscribing service releases it, or the TryTimeout is exceeded (default 60 secs).
+Azure Service Bus will be configured FIFO(First In First Out) message queuing in PeekLock mode. This causes a consumption lock to be placed on the message, preventing other subscribers from retrieving the message. This consumption lock remains in place until the subscribing service releases it, or the TryTimeout is exceeded (default 60 secs).
 
-A message that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue), which is a built-in subqueue for all Azure Service Bus Queues and Topics with dead-lettering enabled. This pattern has dead-lettering enabled by default.
+A message that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue). This pattern has dead-lettering enabled by default.
 
 ### Data Subscriptions
 This pattern is defaulted with two subscribers, Application Y and Application Z. Each subscribing application will subscribe to their defined Azure Service Bus Topic and retrieve the published data. Upon completion of processing the data, the application will trigger the Service Bus Topic to remove the consumption lock.
@@ -94,26 +94,28 @@ In this pattern Application Y will use Topic A0 and Application Z will use Topic
 ### Further Processing
 #### Application Y
 ##### Data Retrieval and Processing
-In this pattern, Application Y is designed to subscribe to Azure Service Bus Topic A0 and process the published data. The data will be loaded into an Azure SQL databases, both Azure hosted and On-Prem to be used by other applications and to provide data for reporting.
+In this pattern, Application Y is designed to subscribe to Azure Service Bus Topic A0 and process the published data. The data will be loaded into an Azure SQL database. It will be written to both Azure hosted and On-Prem legacy database allowing legacy applications to use the data.
 
-Once the data is recieved and processed, the application will POST a request trigger with a schema appropriate body to the Azure Logic App callable endpoint designated by the code. The callable endpoint will route the event data to the workflow, where it will be searched for key:value pairs in its payload to determine the next step of the workflow. Assuming the workflow has two successful paths, 0 and 1, the Logic App will route successful messages to an Azure Service Bus Namespace, Namespace B, configured with Topics B0 and B1. Unsuccessful messages, such as those with missing fields, will be routed to the Azure Event Grid.
+Once the data is received and processed, the application will POST a request trigger with a schema appropriate body to the Azure Logic App callable endpoint designated by the application. The callable endpoint will route the JSON load to the workflow to determine the next step. The workflow has two successful paths, 0 and 1, and the Logic App will route successful messages to an Azure Service Bus Namespace, Namespace B, configured with Topics B0 and B1. Unsuccessful messages will be routed to the Azure Event Grid.
 
-As the last step of a successful workflow, the logic app will trigger the Azure Service Bus Topic A0 to resolve and delete the retrieved message. This ensures the data was properly ingested in the intake process and received by the next step. 
+As the last step of a successful workflow, the logic app will trigger the Azure Service Bus Topic A0 to resolve and delete the retrieved message and return a 201. 
 
 There are two possible happy paths from Application Y to be 0 and 1, the data from path 0, will be sent by the Logic App to Topic B0 and data from path 1 will be sent by the Logic App to Topic B1.
 
-Namespace B will also be configured for FIFO queuing, PeekLock subscription handling, and dead-letter queuing. This is the same as Namespace A. This means that a message in Namespace B that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue), which is a built in subqueue for all Azure Service Bus Queues and Topics with dead-lettering enabled. This pattern has dead-lettering enabled by default. 
+Namespace B will also be configured for FIFO queuing, PeekLock subscription handling, and dead-letter queuing. This is the same as Namespace A. This means that a message in Namespace B that does not have the lock removed by the subscriber and exceeds the TryTimeout setting, will have its retry counter incremented by 1. If the retry counter exceeds the MaxRetries setting (default 10), the message will be routed to the DLQ (Dead Letter Queue). This pattern has dead-lettering enabled by default. 
 
 ##### Data Storage on Azure SQL Server
 A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a seperate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy. 
 
-Data from Topic B0 will be sent to the Azure SQL Server via the Azure SQL Server standard connector and configured to retry delivery X times (default 4). If the Logic App does not recieve a successful response (200 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
+Data from Topic B0 will be sent to the Azure SQL Server via the Azure SQL Server standard connector and configured to retry delivery X times (default 4). If the Logic App does not receive a successful response (201 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
 
 The last step of this logic app will be to remove the consumption lock from the message in Topic B0.  
 
 ##### Data Storage on On-Prem SQL Server
-A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a seperate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy. 
-Data from Topic B1 will be sent to the On-Prem SQL Server via the SQL Server standard connector. This data will be sent via either ExpressRoute or VPN connection and the Logic App will be configured to retry delivery X times (default 4). If the Logic App does not recieve a successful response (200 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
+A Logic App workflow will be configured with a '"When messages are available in a topic subscription" Service Bus Trigger' for both Topics B0 and B1. This trigger will engage a Logic App workflow when data is placed in Topic B0, or a separate workflow when data is placed in Topic B1. Topic B0 is designed for data to be stored in Azure SQL Server and Topic B1 is designed for data to be stored the On-Prem Sql Server. Application Y will be configured to send all successful messages to both Topics, B0 and B1, for redundancy.
+
+Data from Topic B1 will be sent to the On-Prem SQL Server via the SQL Server standard connector. This data will be sent via ExpressRoute and the Logic App will be configured to retry delivery X times (default 4). If the Logic App does not receive a successful response (201 message), the Logic App will default to its runafter configuration, which is configured in this pattern send the error to Azure Event Grid.
+
 The last step of this logic app will be to remove the consumption lock from the message in Topic B1.  
 
 #### Application Z
@@ -129,7 +131,7 @@ A Logic App workflow will be configured with a '"When messages are available in 
 
 The last step of this logic app will be to remove the consumption lock from the message in Topic C0.  
 ### Error Handling
-Any errors that occur during this process will be routed to Azure Event Grid. Event Grid will be configured with corresponding topics from the Azure Service Bus Namespace Topics; A0, A1, B0, B1, and C0. The Event Grid will also be configured with topics for each Azure Logic App workflow. When an error occurs in in either Service Bus or Logic App, the service with the error publishes a message to their corresponding topic. From there, the topic will then push a message to X Azure Service or Y webhook to be processed further. In this pattern, all Event Grid Topics will pushed to Azure an Azure Logic App configured with a workflow to send an email. 
+Any errors that occur during this process will be routed to Azure Event Grid. Event Grid will be configured with corresponding topics from the Azure Service Bus Namespace Topics; A0, A1, B0, B1, and C0. The Event Grid will also be configured with topics for each Azure Logic App workflow. When an error occurs in in either Service Bus or Logic App, the service with the error publishes a message to their corresponding topic. 
 
 ## Appendices
 ### Appendix A: Event Driven Architecture
