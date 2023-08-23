@@ -25,7 +25,6 @@
    - [Appendix D: Performance Considerations](#appendix-d-performance-considerations)
    - [Appendix E: Cost Analysis](#appendix-e-cost-analysis)
    - [Appendix F: Testing Strategies](#appendix-f-testing-strategies)
-9. [Glossary](#glossary)
 
 ## Pattern Function
 To process incoming event traffic. 
